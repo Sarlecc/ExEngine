@@ -14,6 +14,7 @@
  * 
  * this object holds the mongodb admin data and needs to get
  * set to the correct values.
+ * NOTE that this may be changed/removed in the future.
  */
 var admin = {
 	user : 'admin',
