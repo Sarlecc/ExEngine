@@ -28,6 +28,10 @@ var projectFolder = "projectFolderName";
 
 // DO NOT CHANGE ANYTHING PAST THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING
 
+//TODO will need to have an object here that stores the userName, pass and socket id
+//Maybe send socket id back to user then use it as a key up above?	
+var users = {};
+
 var fs = require('fs');
 var app = require('express')();
 
@@ -122,9 +126,134 @@ app.post('/js/utility/*', function(req, res){
 });
 
 io.on('connection', function(socket){
+        /**
+	 * This function creates a new user and stores the user in the system.users database
+	 * TODO it currently does not hold initial save data for that user.
+	 */
+	//TODO test all account creation/login/logout functions
+	socket.on('Create', function(user){
+		//TODO check the following might not be in the multiplayer data base for users.
+		var db = mongoskin.db(admin.user + ':' + admin.pass + '@' + dbHost + ':' +
+		                      dbPort + '/multiplayer');
+		var userToBeCreated = {user: user.name, pwd: user.pass, customData: {}, roles: []};
+		db.bind('system.users', {
+			findUser: function(name, fn) {
+				db.collection('system.users').getUser(name, function(error, item) {
+					if (error) {
+						//TODO can I do this here?
+					   db.collection('system.users').create(userToBeCreated, function(count, id){
+  		                   db.collection('system.users').find({
+  			                   _id: db.collection('system.users').id(id)
+  		                   }).toArray(function(error, items){
+  			                   console.info("find: ", items);
+  			                   db.close();
+  			                   //process.exit(0);  		
+  	                       });
+  	                   });
+					} else {
+					   return socket.emit('User Error', error);
+					}
+				});
+			},
+			create: function(user, fn) {
+				db.collection('system.users').createUser(user, function(error, item){
+					if (error) {
+						return socket.emit('User Error', error);
+					} else {
+						users[socket.id] = {name: user.name, pass: user.pass};
+						return socket.emit('Logging in', true);
+					}
+				})
+			}
+		});
+		
+		db.collection('system.users').findUser(user.name, function(count, id){
+  		    db.collection('system.users').find({
+  			    _id: db.collection('system.users').id(id)
+  		    }).toArray(function(error, items){
+  			    console.info("find: ", items);
+  			    db.close();
+  			//process.exit(0);  		
+  	       });
+  	    });
+		
+	});
+	
+	/**
+	 * This function allows the user to login it checks to see if that user is already logged in first
+	 * then checks to see if their is a name by that user name in the data base.
+	 * TODO need to add a check to see if passes match use db.auth?
+	 */
+	socket.on('Login', function(user){
+		var db = mongoskin.db(admin.user + ':' + admin.pass + '@' + dbHost + ':' +
+		                      dbPort + '/multiplayer');
+		// TODO send user save back to client
+		for (key in users) {
+			if (users[key].name === user.name) {
+				//TODO check this.
+				return socket.emit('Alread Logged In', 'Already Logged in', false);
+			}			
+		}
+		
+		db.bind('system.users', {
+			findUser: function(name, fn) {
+				db.collection('system.users').getUser(name, function(error, item) {
+					if (error) {
+					   return socket.emit('User Error', 'Wrong user name or pass');
+					}
+					db.collection('system.users').authenicate(user.name, user.pass, function(count, id){
+  		                 db.collection('system.users').find({
+  			                 _id: db.collection('system.users').id(id)
+  		                 }).toArray(function(error, items){
+  			                 console.info("find: ", items);
+  			                 db.close();
+  			                 //process.exit(0);  		
+  	                     });
+  	                });
+				});
+			},
+			authenticate: function(user, fn) {
+				db.collection('system.users').auth(user.name, user.pass, function(error, item){
+					if (error) {
+						return socket.emit('User Error', 'Wrong user name or pass');
+					}
+					users[socket.id] = {name: user.name, pass: user.pass};
+		            //TODO send player save data here
+		            return socket.emit('Logging in', true);
+				});
+			}
+		});
+		
+		db.collection('system.users').findUser(user.name, function(count, id){
+  		    db.collection('system.users').find({
+  			    _id: db.collection('system.users').id(id)
+  		    }).toArray(function(error, items){
+  			    console.info("find: ", items);
+  			    db.close();
+  			//process.exit(0);  		
+  	       });
+  	    });
+
+	});
+	
+	/**
+	 * This function removes the user from the users object thus no longer being logged in
+	 */
+	socket.on('Logout', function(){
+		// TODO remove user from user list and save? 
+		//If I need to save then I need to put the mongoskin thing back in
+		users[socket.id] = undefined;
+		users = JSON.parse(JSON.stringify(users));
+	});
+	
+	socket.on('SaveUserData', function(save){
+		var db = mongoskin.db('TODO user values here')
+	})
+  
   /**
    * save skill data
    */
+  //TODO remove all cases of user from functions and use the users object instead.
   socket.on('save skill data', function(data, user){
   	var db = mongoskin.db(user.user + ':' + user.pass + '@' + dbHost + ':' + 
   	                  dbPort + '/multiplayer', {safe:true});
