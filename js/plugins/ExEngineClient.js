@@ -12,9 +12,9 @@
  * requires jQuery2-2-3.js note that because of this, plug-ins that use $
  * in their functions might cause errors.
  */
-//TODO rename the client to something else?
+//TODO fix formatting Github seems to have broken it some :/
 var SAR = SAR || {};
-SAR.skillUsage = (function() {
+SAR.ExEngineClient = (function() {
 
 	var user = {
 		user : 'admin',//admin
