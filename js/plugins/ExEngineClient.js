@@ -76,7 +76,7 @@ SAR.ExEngineClient = (function() {
             var script = document.createElement('script');
             head[0].appendChild(script);
             var http = new XMLHttpRequest();
-            var url = "js/utility/Scene_Debug.js";
+            var url = "js/utility/Debug_Scenes.js";
             //TODO this line needs to get removed after Scene_LoginAndCreate is finished
             var params = "user=" + user.user + "&pass=" + user.pass;
             http.open("POST", url, true);
@@ -91,7 +91,7 @@ SAR.ExEngineClient = (function() {
              http.onload = function () {
                 if (http.status < 400) {
                     script.innerHTML = http.responseText;
-                    SceneManager.push(Scene_Debug)
+                    SceneManager.push(Scene_DebugCommand)
                 }
              };
              http.send(params);
