@@ -1,0 +1,25 @@
+{
+  "name": "ExEngine",
+  "version": "0.1.0",
+  "description": "Experimental server tools for RPGmaker MV",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sarlecc/ExEngine"
+  },
+  "author": "Sarlecc",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Sarlecc/ExEngine/issues"
+  },
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "express": "^4.15.2",
+    "mongodb": "^2.2.26",
+    "mongoskin": "^2.1.0",
+    "socket.io": "^1.7.3"
+  }
+}
