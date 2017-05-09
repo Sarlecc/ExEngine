@@ -14,8 +14,6 @@
 //if I still want to do it this way then I'll have to find a way to make it more secure.
 (function (In) {
 	
-	In.allowAdvancedType = ['Scene_SkillStats', 'Scene_CreateLoginAccount', 'Scene_Debug'];
-	
 	In.dontType = ['pageup', 'pagedown', 'left', 'right', 'down', 
 	               'up', 'alt', 'control', 'backspace', 'ok', 'tab',
 	               'delete', 'escape', 'shift', 'enter', 'capslock'];
@@ -102,7 +100,7 @@
           var buttonName = 0;
           //TODO do I want this check if not might be able to remove the normal keyMapper check
           //will need to check this
-          if (In.allowAdvancedType.includes(SceneManager._scene.sceneName)){
+          if (SceneManager._scene.advInput === true){
         	  if (this._shiftState || this._capsState) {
         		  buttonName = this.keyMapperUpperCase[event.keyCode];
         	  } else {
