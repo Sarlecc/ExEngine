@@ -871,7 +871,7 @@ Scene_SkillStats.prototype.constructor = Scene_SkillStats;
 
 Scene_SkillStats.prototype.initialize = function () {
 	Scene_MenuBase.prototype.initialize.call(this);
-	this.sceneName = 'Scene_SkillStats';
+	this.advInput = true;
 };
 
 Scene_SkillStats.prototype.create = function () {
