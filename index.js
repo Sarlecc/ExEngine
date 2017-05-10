@@ -86,7 +86,7 @@ app.post('/js/utility/*', function(req, res){
 	// might have to make this into a callback function
 	//TODO this will have to get changed to the socket.id and load the proper user object from the 
 	//users object
-	    var isAdmin = {user: req.body.user, pass: req.body.pass};
+	    var isAdmin = admin;//{user: req.body.user, pass: req.body.pass};
 	    var db = mongoskin.db(isAdmin.user + ':' + isAdmin.pass + '@' + dbHost + ':' + 
   	                          dbPort + '/multiplayer', {safe:true});
 	  	db.bind('system.users', {
@@ -127,7 +127,9 @@ io.on('connection', function(socket){
    * save skill data
    */
   socket.on('save skill data', function(data, user){
-  	var db = mongoskin.db(user.user + ':' + user.pass + '@' + dbHost + ':' + 
+	//TODO do I want this to just use the admin object all the time might make more sense as
+	//anyone should be able to save skill stat data
+  	var db = mongoskin.db(admin.user + ':' + admin.pass + '@' + dbHost + ':' + 
   	                  dbPort + '/multiplayer', {safe:true});
   	var information = data;
   	var collection = information.collection;
