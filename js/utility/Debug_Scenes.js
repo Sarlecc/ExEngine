@@ -755,7 +755,6 @@ Window_SkillStats.prototype.update = function() {
 // Window_DebugCommand
 //
 // The window for selecting a debug scene.
-// TODO need to test Window_DebugCommand and Scene_DebugCommand more
 
 function Window_DebugCommand() {
     this.initialize.apply(this, arguments);
@@ -810,22 +809,22 @@ Window_DebugCommand.prototype.selectLast = function() {
  * Scene_DebugCommand
  * 
  * This is a precommand scene that has commands to go to different Debugging scenes
- * TODO this class needs to get tested.
+ * 
  */
 
 function Scene_DebugCommand() {
     this.initialize.apply(this, arguments);
 }
 
-Scene_DebugCommand.prototype = Object.create(Scene_Base.prototype);
+Scene_DebugCommand.prototype = Object.create(Scene_MenuBase.prototype);
 Scene_DebugCommand.prototype.constructor = Scene_DebugCommand;
 
 Scene_DebugCommand.prototype.initialize = function() {
-    Scene_Base.prototype.initialize.call(this);
+    Scene_MenuBase.prototype.initialize.call(this);
 };
 
 Scene_DebugCommand.prototype.create = function() {
-    Scene_Base.prototype.create.call(this);
+    Scene_MenuBase.prototype.create.call(this);
     this.createWindowLayer();
     this.createCommandWindow();
 };
@@ -834,20 +833,20 @@ Scene_DebugCommand.prototype.update = function() {
     if (!this.isBusy()) {
         this._commandWindow.open();
     }
-    Scene_Base.prototype.update.call(this);
+    Scene_MenuBase.prototype.update.call(this);
 };
 
 Scene_DebugCommand.prototype.isBusy = function() {
-    return this._commandWindow.isClosing() || Scene_Base.prototype.isBusy.call(this);
+    return this._commandWindow.isClosing() || Scene_MenuBase.prototype.isBusy.call(this);
 };
 
 Scene_DebugCommand.prototype.terminate = function() {
-    Scene_Base.prototype.terminate.call(this);
+    Scene_MenuBase.prototype.terminate.call(this);
     SceneManager.snapForBackground();
 };
 
 Scene_DebugCommand.prototype.createCommandWindow = function() {
-    this._commandWindow = new Window_DebugCommand(Graphics.width / 2, Graphics.hieght / 2);
+    this._commandWindow = new Window_DebugCommand((Graphics.boxWidth - 240) / 2, Graphics.boxHeight - 260 - 96);
     this._commandWindow.setHandler('debug',  this.commandDebug.bind(this));
     this._commandWindow.setHandler('skillStats', this.commandSkillStats.bind(this));
     this.addWindow(this._commandWindow);
