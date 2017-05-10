@@ -388,32 +388,33 @@ Window_SkillStatsSelection.prototype.drawAllItems = function() {
         }
     }
 };
+
 //-----------------------------------------------------------------------------
-// Window_SkillStatsSearch
+// Window_ValueBar
 //
-// The search bar for looking for a particular monster/actor
+// Essentially an input bar that displays whats typed has many, many uses.
 // The following code is based off a piece of yanfly's rpgmaker vx ace
 // debug script
-function Window_SkillStatsSearch() {
+function Window_ValueBar() {
     this.initialize.apply(this, arguments);
 };
 
-Window_SkillStatsSearch.prototype = Object.create(Window_Base.prototype);
-Window_SkillStatsSearch.prototype.constructor = Window_SkillStatsSearch;
+Window_ValueBar.prototype = Object.create(Window_Selectable.prototype);
+Window_ValueBar.prototype.constructor = Window_ValueBar;
 
-Window_SkillStatsSearch.prototype.initialize = function (x, y) {
+Window_ValueBar.prototype.initialize = function (x, y) {
 	 var width = Graphics.width;
      var height = 72;
      this.blinker = false;
      this.maxium = 300;
      this.text = '';
-     Window_Base.prototype.initialize.call(this, x, y, width, height);
+     Window_Selectable.prototype.initialize.call(this, x, y, width, height);
      this.contents.fontSize = 16;
      this.contents.textColor = '#0FAB84';
      this.refresh();
 };
 
-Window_SkillStatsSearch.prototype.refresh = function() {
+Window_ValueBar.prototype.refresh = function() {
 	this.contents.clear();
 	this.contents.fillRect(0, 0, this.width, this.height, '#FFFFFF');
 	 this.contents.fillRect(1, 1, this.width-2, this.height-2, '#000000');
@@ -424,7 +425,7 @@ Window_SkillStatsSearch.prototype.refresh = function() {
 	}
 };
 
-Window_SkillStatsSearch.prototype.update = function() {
+Window_ValueBar.prototype.update = function() {
 	this.blinker = Graphics.frameCount % 30 === 0 ? !this.blinker : this.blinker;
 	if (Input._latestButton !== null && Input.isRepeated(Input._latestButton)) {
 		if (Input._latestButton === 'backspace' && this.text.length > 0) {
@@ -436,8 +437,12 @@ Window_SkillStatsSearch.prototype.update = function() {
 	this.refresh();
 };
 
-Window_SkillStatsSearch.prototype.getText = function() {
+Window_ValueBar.prototype.getText = function() {
 	return this.text;
+};
+
+Window_ValueBar.prototype.resetText = function() {
+	this.text = '';
 };
 
 //-----------------------------------------------------------------------------
@@ -903,7 +908,7 @@ Scene_SkillStats.prototype.createListWindow = function () {
 };
 
 Scene_SkillStats.prototype.createSearchBar = function () {
-	this._searchBar = new Window_SkillStatsSearch(0, Graphics.height - 72);
+	this._searchBar = new Window_ValueBar(0, Graphics.height - 72);
 	this.addWindow(this._searchBar);
 };
 
