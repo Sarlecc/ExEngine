@@ -749,6 +749,7 @@ Window_SkillStats.prototype.update = function() {
 		this._checking = true;
 		this.getSkillData();
 	}
+	Window_Selectable.prototype.update.call(this);
 };
 
 //-----------------------------------------------------------------------------
@@ -802,6 +803,278 @@ Window_DebugCommand.prototype.processOk = function() {
 
 Window_DebugCommand.prototype.selectLast = function() {
     this.selectSymbol(Window_DebugCommand._lastCommandSymbol);
+};
+
+//-----------------------------------------------------------------------------
+// Window_DebugEdit
+//
+// The window for displaying switches and variables on the debug screen. This
+// the right window, and is the one that actually allows you to change the
+// values of the switches and variables.
+
+function Window_DebugEdit() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_DebugEdit.prototype = Object.create(Window_Selectable.prototype);
+Window_DebugEdit.prototype.constructor = Window_DebugEdit;
+
+Window_DebugEdit.prototype.initialize = function(x, y, width) {
+    var height = this.fittingHeight(10);
+    Window_Selectable.prototype.initialize.call(this, x, y, width, height);
+    this._mode = 'switch';
+    this._topId = 1;
+    this.refresh();
+};
+
+Window_DebugEdit.prototype.maxItems = function() {
+    return 10;
+};
+
+Window_DebugEdit.prototype.refresh = function() {
+    this.contents.clear();
+    this.drawAllItems();
+};
+
+Window_DebugEdit.prototype.drawItem = function(index) {
+    var dataId = this._topId + index;
+    var idText = dataId.padZero(4) + ':';
+    var idWidth = this.textWidth(idText);
+    var statusWidth = this.textWidth('-0000000000000000000');
+    var name = this.itemName(dataId);
+    var status = this.itemStatus(dataId);
+    var rect = this.itemRectForText(index);
+    this.resetTextColor();
+    this.drawText(idText, rect.x, rect.y, rect.width);
+    rect.x += idWidth;
+    rect.width -= idWidth + statusWidth;
+    this.drawText(name, rect.x, rect.y, rect.width);
+    this.drawText(status, rect.x + rect.width, rect.y, statusWidth, 'right');
+};
+
+Window_DebugEdit.prototype.itemName = function(dataId) {
+    if (this._mode === 'switch') {
+        return $dataSystem.switches[dataId];
+    } else {
+        return $dataSystem.variables[dataId];
+    }
+};
+
+Window_DebugEdit.prototype.itemStatus = function(dataId) {
+    if (this._mode === 'switch') {
+        return $gameSwitches.value(dataId) ? '[ON]' : '[OFF]';
+    } else {
+    	switch (typeof $gameVariables.value(dataId)) {
+    		case 'string':
+    		return String('"'+$gameVariables.value(dataId)+'"');
+    		break;
+    		case 'boolean':
+    		return String('Boolean: '+$gameVariables.value(dataId));
+    		break;
+    		default:
+    		if (Array.isArray($gameVariables.value(dataId))) {
+    			return String('['+$gameVariables.value(dataId)+']');
+    		} else {
+    		    return String($gameVariables.value(dataId));
+    		}
+    	}
+    }
+};
+
+Window_DebugEdit.prototype.setMode = function(mode) {
+    if (this._mode !== mode) {
+        this._mode = mode;
+        this.refresh();
+    }
+};
+
+Window_DebugEdit.prototype.setTopId = function(id) {
+    if (this._topId !== id) {
+        this._topId = id;
+        this.refresh();
+    }
+};
+
+Window_DebugEdit.prototype.currentId = function() {
+    return this._topId + this.index();
+};
+
+Window_DebugEdit.prototype.update = function() {
+    Window_Selectable.prototype.update.call(this);
+    if (this.active) {
+        if (this._mode === 'switch') {
+            this.updateSwitch();
+        } else {
+        	if (Input.isTriggered('enter')) {
+               this.updateVariable(this._valueBar.getText());
+               this._valueBar.resetText();
+            }
+        }
+    }
+};
+
+Window_DebugEdit.prototype.updateSwitch = function() {
+    if (Input.isRepeated('ok')) {
+        var switchId = this.currentId();
+        SoundManager.playCursor();
+        $gameSwitches.setValue(switchId, !$gameSwitches.value(switchId));
+        this.redrawCurrentItem();
+    }
+};
+
+Window_DebugEdit.prototype.updateVariable = function(input) {
+    var variableId = this.currentId();
+    var value = $gameVariables.value(variableId);
+    var newValue;
+    input = input || '0';
+    try {
+    	newValue = JSON.parse(JSON.parse(JSON.stringify(input)));
+    } catch (e) {
+    	console.error(e);
+    	return false;
+    }
+    if (newValue !== value) {
+    	$gameVariables.setValue(variableId, newValue);
+    	this.refresh();
+    	return true;
+    }
+};
+
+Window_DebugEdit.prototype.setValueBar = function(valueBar) {
+    this._valueBar = valueBar;
+    this.update();
+};
+
+//-----------------------------------------------------------------------------
+// Window_DebugRange
+//
+// The window for selecting a block of switches/variables on the debug screen.
+// This is the left window, and used to be literally called Window_DebugLeft
+// in previous makers.
+
+function Window_DebugRange() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_DebugRange.prototype = Object.create(Window_Selectable.prototype);
+Window_DebugRange.prototype.constructor = Window_DebugRange;
+
+Window_DebugRange.lastTopRow = 0;
+Window_DebugRange.lastIndex  = 0;
+
+Window_DebugRange.prototype.initialize = function(x, y) {
+    this._maxSwitches = Math.ceil(($dataSystem.switches.length - 1) / 10);
+    this._maxVariables = Math.ceil(($dataSystem.variables.length - 1) / 10);
+    var width = this.windowWidth();
+    var height = this.windowHeight();
+    Window_Selectable.prototype.initialize.call(this, x, y, width, height - 70);
+    this.refresh();
+    this.setTopRow(Window_DebugRange.lastTopRow);
+    this.select(Window_DebugRange.lastIndex);
+    this.activate();
+};
+
+Window_DebugRange.prototype.windowWidth = function() {
+    return 246;
+};
+
+Window_DebugRange.prototype.windowHeight = function() {
+    return Graphics.boxHeight;
+};
+
+Window_DebugRange.prototype.maxItems = function() {
+    return this._maxSwitches + this._maxVariables;
+};
+
+Window_DebugRange.prototype.update = function() {
+    Window_Selectable.prototype.update.call(this);
+    if (this._editWindow) {
+        this._editWindow.setMode(this.mode());
+        this._editWindow.setTopId(this.topId());
+    }
+    if (Input.isTriggered("tab")) {
+    	this.select(this.find());
+    	this._valueBar.resetText();
+    }
+};
+
+Window_DebugRange.prototype.mode = function() {
+    return this.index() < this._maxSwitches ? 'switch' : 'variable';
+};
+
+Window_DebugRange.prototype.topId = function() {
+    var index = this.index();
+    if (index < this._maxSwitches) {
+        return index * 10 + 1;
+    } else {
+        return (index - this._maxSwitches) * 10 + 1;
+    }
+};
+
+Window_DebugRange.prototype.find = function() {
+	if($dataSystem.switches.includes(this._valueBar.getText())) {
+		return Math.floor(($dataSystem.switches.indexOf(this._valueBar.getText()) / 10));
+	} else if ($dataSystem.variables.includes(this._valueBar.getText())) {
+		console.log(Math.floor((($dataSystem.variables.indexOf(this._valueBar.getText()) + $dataSystem.switches.length)  
+		                    )));
+		return Math.floor((($dataSystem.variables.indexOf(this._valueBar.getText()) + $dataSystem.switches.length) / 
+		                    10));
+	} else {
+		return Window_DebugRange.lastIndex;
+	}
+};
+
+Window_DebugRange.prototype.refresh = function() {
+    this.createContents();
+    this.drawAllItems();
+};
+
+Window_DebugRange.prototype.drawItem = function(index) {
+    var rect = this.itemRectForText(index);
+    var start;
+    var text;
+    if (index < this._maxSwitches) {
+        start = index * 10 + 1;
+        text = 'S';
+    } else {
+        start = (index - this._maxSwitches) * 10 + 1;
+        text = 'V';
+    }
+    var end = start + 9;
+    text += ' [' + start.padZero(4) + '-' + end.padZero(4) + ']';
+    this.drawText(text, rect.x, rect.y, rect.width);
+};
+
+Window_DebugRange.prototype.isCancelTriggered = function() {
+    return (Window_Selectable.prototype.isCancelTriggered() ||
+            Input.isTriggered('debug'));
+};
+
+Window_DebugRange.prototype.processCancel = function() {
+    Window_Selectable.prototype.processCancel.call(this);
+    Window_DebugRange.lastTopRow = this.topRow();
+    Window_DebugRange.lastIndex = this.index();
+};
+
+Window_DebugRange.prototype.setEditWindow = function(editWindow) {
+    this._editWindow = editWindow;
+    this.update();
+};
+
+Window_DebugRange.prototype.setValueBar = function(valueBar) {
+    this._valueBar = valueBar;
+    this.update();
+};
+
+//-----------------------------------------------------------------------------
+// overwritten Window_Selectable functions
+//-----------------------------------------------------------------------------
+Window_Selectable.prototype.isOkTriggered = function() {
+    return Input.isRepeated('ok') || Input.isRepeated('enter');
+};
+
+Window_Selectable.prototype.isCancelTriggered = function() {
+    return Input.isRepeated('cancel') || Input.isRepeated('escape');
 };
 
 
@@ -960,7 +1233,106 @@ Scene_SkillStatData.prototype.create = function () {
 
 Scene_SkillStatData.prototype.createDataWindow = function () {
 	this._dataWindow = new Window_SkillStats(0, 0);
+	this._dataWindow.setHandler('cancel', this.popScene.bind(this));
 	this.addWindow(this._dataWindow);
 	this._dataWindow.setActor(this._character);
+};
+
+/*
+ * Enhanced Scene_Debug
+ * This increases the versatility of $gameVariables allowing you to type in
+ * nearly any data type. It also allows searching for a named
+ * switch or variable for easy finding
+ */
+
+function Scene_Debug() {
+    this.initialize.apply(this, arguments);
+}
+
+Scene_Debug.prototype = Object.create(Scene_MenuBase.prototype);
+Scene_Debug.prototype.constructor = Scene_Debug;
+
+Scene_Debug.prototype.initialize = function() {
+    Scene_MenuBase.prototype.initialize.call(this);
+    this.advInput = true;
+};
+
+Scene_Debug.prototype.create = function() {
+    Scene_MenuBase.prototype.create.call(this);
+    this.createRangeWindow();
+    this.createEditWindow();
+    this.createValueBar();
+    this.createDebugHelpWindow();
+};
+
+Scene_Debug.prototype.createRangeWindow = function() {
+    this._rangeWindow = new Window_DebugRange(0, 0);
+    this._rangeWindow.setHandler('ok', this.onRangeOk.bind(this));
+    this._rangeWindow.setHandler('cancel', this.popScene.bind(this));
+    this.addWindow(this._rangeWindow);
+};
+
+Scene_Debug.prototype.createEditWindow = function() {
+    var wx = this._rangeWindow.width;
+    var ww = Graphics.boxWidth - wx;
+    this._editWindow = new Window_DebugEdit(wx, 0, ww);
+    this._editWindow.setHandler('cancel', this.onEditCancel.bind(this));
+    this._rangeWindow.setEditWindow(this._editWindow);
+    this.addWindow(this._editWindow);
+};
+
+Scene_Debug.prototype.createValueBar = function() {
+	this._valueBar = new Window_ValueBar(0, Graphics.height - 70);
+	this._editWindow.setValueBar(this._valueBar);
+	this._rangeWindow.setValueBar(this._valueBar);
+	this._valueBar.activate();
+	this.addWindow(this._valueBar);
+};
+
+Scene_Debug.prototype.createDebugHelpWindow = function() {
+    var wx = this._editWindow.x;
+    var wy = this._editWindow.height;
+    var ww = this._editWindow.width;
+    var wh = Graphics.boxHeight - wy;
+    this._debugHelpWindow = new Window_Base(wx, wy, ww, wh - 70);
+    this.addWindow(this._debugHelpWindow);
+    this.refreshHelpWindow();
+};
+
+Scene_Debug.prototype.onRangeOk = function() {
+    this._editWindow.activate();
+    this._editWindow.select(0);
+    this.refreshHelpWindow();
+};
+
+Scene_Debug.prototype.onEditCancel = function() {
+    this._rangeWindow.activate();
+    this._editWindow.deselect();
+    this.refreshHelpWindow();
+};
+
+Scene_Debug.prototype.acceptValue = function () {
+	this._editWindow.updateVariable(this._valueBar.getText());
+	this._editWindow.refresh();
+}
+
+Scene_Debug.prototype.refreshHelpWindow = function() {
+    this._debugHelpWindow.contents.clear();
+    if (this._editWindow.active) {
+        this._debugHelpWindow.drawTextEx(this.helpText(), 1, 0);
+    } else {
+    	this._debugHelpWindow.drawTextEx(('Type in the name of a switch or\nvariable'+
+    	                                  ' then press Tab to locate it.'), 1, 0);
+    }
+};
+
+Scene_Debug.prototype.helpText = function() {
+    if (this._rangeWindow.mode() === 'switch') {
+        return 'Enter : ON / OFF';
+    } else {
+        return ('Type your value in then press Enter.\n'+
+                'Remember Strings and Object Properties\n'+
+                'must be wrapped in double quotes.');
+    }
 };
 
