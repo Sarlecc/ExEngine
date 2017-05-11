@@ -464,6 +464,7 @@ Window_SkillStats.prototype.initialize = function() {
     this._totalUses = 0;
     this._skillData = {};
     this._checking = false;
+    this._collected = false;
     this.refresh();
     this.activate();
 };
@@ -504,10 +505,13 @@ Window_SkillStats.prototype.getSkillData = function(){
 	}
 	var self = this;
 	socket.emit("retrieve data", request, function(data) {
-		self._skillData = data;
-		self.getMaxSkillUsed();
-		self.totalUses();
-		self.refresh(); //TODO added this line.... from update think this is good
+	        if (self._collected === false) {
+		    self._skillData = data;
+		    self.getMaxSkillUsed();
+		    self.totalUses();
+		    self._collected = true;
+		    self.refresh(); //TODO added this line.... from update think this is good
+		}
 	});
 };
 
