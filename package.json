@@ -1,6 +1,6 @@
 {
   "name": "ExEngine",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Experimental server tools for RPGmaker MV",
   "main": "index.js",
   "dependencies": {
