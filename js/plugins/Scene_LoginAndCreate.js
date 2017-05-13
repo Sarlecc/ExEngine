@@ -58,7 +58,6 @@ Object.defineProperty(SAR_Special, 'Window_User', {
             	   }
      });
 
-    */
     /**
      * function SAR_Special.Window_User.reset
      * params key {string}
@@ -329,6 +328,7 @@ Object.defineProperty(SAR_Special, 'Window_User', {
 		    	this._accept[this._data] = true;
 		    }
 	    }
+	    Window_Base.prototype.update.call(this);
     };
  
 /*
@@ -343,7 +343,7 @@ SAR.Scene_CreateLoginAccount = function (){
     
     SAR.Scene_CreateLoginAccount.prototype.initialize = function () {
         Scene_MenuBase.prototype.initialize.call(this);
-        this.sceneName = "Scene_CreateLoginAccount";
+        this.advInput = true;
         this._method = "Login";
     };
 
