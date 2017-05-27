@@ -98,6 +98,7 @@
           	}
           }
           var buttonName = 0;
+
           if (SceneManager._scene.advInput === true){
         	  if (this._shiftState || this._capsState) {
         		  buttonName = this.keyMapperUpperCase[event.keyCode];
@@ -130,7 +131,7 @@
     In._shouldPreventDefault = function(keyCode) {
         switch (keyCode) {
         case 8:     // backspace
-	case 9:     // tab
+	      case 9:     // tab
         case 33:    // pageup
         case 34:    // pagedown
         case 37:    // left arrow

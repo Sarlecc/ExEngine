@@ -16,9 +16,11 @@
 var SAR = SAR || {};
 SAR.ExEngineClient = (function() {
 
+
+	//NOTE that this object is being phased out and doesn't currently hold a function
 	var user = {
-		user : 'admin',//admin
-		pass : 'pass' //password
+		user : '',
+		pass : '' 
 	};
   
 	(function(B) {

@@ -504,11 +504,11 @@ Window_SkillStats.prototype.getSkillData = function(){
 	var self = this;
 	socket.emit("retrieve data", request, function(data) {
 		if (self._collected === false) {
-		self._skillData = data;
-		self.getMaxSkillUsed();
-		self.totalUses();
-		self._collected = true;
-		self.refresh(); //TODO added this line.... from update think this is good
+		    self._skillData = data;
+		    self.getMaxSkillUsed();
+		    self.totalUses();
+		    self._collected = true;
+		    self.refresh(); //TODO added this line.... from update think this is good
 		}
 	});
 };
@@ -531,7 +531,6 @@ Window_SkillStats.prototype.getMaxSkillUsed = function() {
 Window_SkillStats.prototype.totalUses = function() {
 	for (var i = 0; i < this._skillData.data.skills.length; i++) {
 		this._totalUses += this._skillData.data.skills[i][2];
-		console.log(this._totalUses);
 	}
 	this.makePercent();
 	this.avgDamage();

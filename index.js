@@ -14,6 +14,7 @@
  * 
  * this object holds the mongodb admin data and needs to get
  * set to the correct values.
+ * NOTE that this may be changed/removed in the future.
  */
 var admin = {
 	user : 'admin',
@@ -102,7 +103,7 @@ app.get('/*', function(req, res){
  * it requires the client to be an admin otherwise it will send a 403
  * access denied error
  */
-app.post('/js/utility/*', function(req, res){
+app.post('/js/utility/*', function(req, res) {
     console.log('logging scene_debug access');
     //TODO because players are not users of the database I am going to have to find a
     //different way to check if they can access the utility folder
@@ -124,8 +125,8 @@ app.post('/js/utility/*', function(req, res){
   	    res.sendFile(path);
         } else {
   	    res.status(403).send('access to this resource has been denied');
-        }
-        db.close();
+    }
+    db.close();
     });
 });
 
@@ -312,35 +313,34 @@ io.on('connection', function(socket){
   			});	
   		} else {
   		    for (var i = 0; i < item.skills.length; i++){
-  		 	if (item.skills[i][0] === info.skills[0][0]) {
-  			    item.skills[i][2] += 1;
+  		 	    if (item.skills[i][0] === info.skills[0][0]) {
+  			        item.skills[i][2] += 1;
   			    if (item.skills[i][3].length === 10) {
-			        item.skills[i][3].shift();
-  		                item.skills[i][3].push(info.skills[0][3][0]);
+			          item.skills[i][3].shift();
+  		          item.skills[i][3].push(info.skills[0][3][0]);
   			    } else {
-  			    	item.skills[i][3].push(info.skills[0][3][0]);
+  			    	  item.skills[i][3].push(info.skills[0][3][0]);
   			    }
   			    if (item.skills[i][4].length === 10) {
- 				item.skills[i][4].shift();
-  			    	item.skills[i][4].push(info.skills[0][4][0]);
+ 				       item.skills[i][4].shift();
+  			    	 item.skills[i][4].push(info.skills[0][4][0]);
   			    } else {
   			    	item.skills[i][4].push(info.skills[0][4][0]);
   			    }
- 			    saved = true;
-  			    break;
-  			}
-  					
-            	     }
-  		     if (saved === false) {
-  			item.skills.push([
-  			info.skills[0][0],
-  			info.skills[0][1],
-  			info.skills[0][2],
-  			[info.skills[0][3][0]],
-  			[info.skills[0][4][0]]
-                        ]);
-  			saved = true;
-  	              }
+ 			       saved = true;
+  			     break;
+  			  }		
+       }
+  		 if (saved === false) {
+  			  item.skills.push([
+  			  info.skills[0][0],
+  			  info.skills[0][1],
+  			  info.skills[0][2],
+  			  [info.skills[0][3][0]],
+  			  [info.skills[0][4][0]]
+          ]);
+  			  saved = true;
+  	    }
   				  
   		      var id = item._id.toString();
   		      console.info('before saving: ', item);
