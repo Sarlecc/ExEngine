@@ -98,8 +98,6 @@
           	}
           }
           var buttonName = 0;
-          //TODO do I want this check if not might be able to remove the normal keyMapper check
-          //will need to check this
           if (SceneManager._scene.advInput === true){
         	  if (this._shiftState || this._capsState) {
         		  buttonName = this.keyMapperUpperCase[event.keyCode];
