@@ -12,11 +12,11 @@
 //THIS CODE IS FOR A NON PRODUCTION ENVIROMENT AT THE MOMENT
 //TODO add a cancel button? needs to get changed to esc button
 //TODO add someparams for using .pngs for the background windows?
-//TODO store the username and pass on server when client logs in along with socketid will avoid some potential
-//security risks then. Also might want to go through code and rewrite parts of it.
+//TODO Also might want to go through code and rewrite parts of it.
 //also if I store the username and pass on the server I can remove some of the sending username and pass to server
 //that I am currently doing.
 //TODO change Create and Login method in help window only codes to use TextManager.newGame and TextManager.continue_
+//TODO Fix formatting....... (I am going to have to disable automactic indention on Aptana or something)
 const SAR_Special = {};
 var SAR = SAR || {};
 /**
@@ -25,10 +25,10 @@ var SAR = SAR || {};
  */
 Object.defineProperty(SAR_Special, 'Window_User', {
 	value: function (){
-		
+	
 	var user = {
 		'name': "",
-		'pass': ""
+		'pass': "",
 	};
     var maxLength = 20;
     var indexes = {
@@ -58,6 +58,7 @@ Object.defineProperty(SAR_Special, 'Window_User', {
             	   }
      });
 
+    
     /**
      * function SAR_Special.Window_User.reset
      * params key {string}
@@ -155,24 +156,39 @@ Object.defineProperty(SAR_Special, 'Window_User', {
      * 
      * sends user name and pass to server
      * 
-     * returns TODO what does it return or do
-     * returns error
+     * returns bool, data, error
      */
     Object.defineProperty(SAR_Special.Window_User, 'send', {
            value: function(method) {
-    	              //TODO SOCKET.IO call here
-    	              socket.emit(method, user, function(data) {
-    		              try {
-    		                  if (data.success === true) {
-    			                  // success
-    		                  } else if (data.success === false) {
-    			                  throw data.err
-    		                  }
-    		              } catch (e) {
-    			              return e
+           	          user.save = DataManager.makeSaveContents();
+           	          user.save = JsonEx.stringify(user.save);
+    	              socket.emit(method, user, function(bool, data, error) {
+    		              if (bool === true) {
+    			              SAR_Special.Window_User.load(data);
+    		              } else if (bool === false) {
+    		              	console.error(error);
     		              }
     	              });
     	          }
+    });
+    
+    Object.defineProperty(SAR_Special.Window_User, 'load', {
+    	value: function(data) {
+    		var loaded = false;
+    		if (data !== null) {
+    		    DataManager.extractSaveContents(JsonEx.parse(data));
+    		    loaded = true;
+           } else {
+           	    SceneManager.goto(Scene_Map);
+           }
+            if (loaded === true) {
+            	if ($gameSystem.versionId() !== $dataSystem.versionId) {
+                    $gamePlayer.reserveTransfer($gameMap.mapId(), $gamePlayer.x, $gamePlayer.y);
+                    $gamePlayer.requestMapReload();
+                }
+                SceneManager.goto(Scene_Map);
+            }
+    	}
     });
     
     Object.defineProperty(SAR_Special.Window_User, 'resetAll', {
@@ -237,6 +253,10 @@ Object.defineProperty(SAR_Special, 'Window_User', {
     	return this._special.reset(key);
     };
     
+    SAR.Window_User.prototype.resetAll = function () {
+    	return this._special.resetAll();
+    };
+    
     SAR.Window_User.prototype.data = function () {
     	return this._special.userName();
     };
@@ -245,7 +265,6 @@ Object.defineProperty(SAR_Special, 'Window_User', {
     	return this._accept;
     };
     
-    //TODO not sure if I can use return here due to callback functions
     SAR.Window_User.prototype.send = function (method) {
     	return this._special.send(method);
     };
@@ -286,8 +305,6 @@ Object.defineProperty(SAR_Special, 'Window_User', {
         this.contents.paintOpacity = 255;
     };
     
-    //TODO this will need to get changed so as to show asterxes on the window when writing passwords
-    //Think this works?
     SAR.Window_User.prototype.drawChar = function(index) {
         var rect = this.itemRect(index);
         this.resetTextColor();
@@ -345,6 +362,7 @@ SAR.Scene_CreateLoginAccount = function (){
         Scene_MenuBase.prototype.initialize.call(this);
         this.advInput = true;
         this._method = "Login";
+        this._sending = false;
     };
 
     SAR.Scene_CreateLoginAccount.prototype.prepare = function (method) {
@@ -383,12 +401,13 @@ SAR.Scene_CreateLoginAccount = function (){
     //TODO this will need to get changed to to reflect the socket.io server
     SAR.Scene_CreateLoginAccount.prototype.onInputPassOk = function () {
     	if (this._method === "Create") {
-    		this._editWindow = null;
-    		this._helpWindow = null;
-    		SceneManager.goto(Scene_Map);
-    		//this._editWindow.send(this._method);
+    		this._editWindow.send(this._method);
+    		this._sending = true;
+    		this._editWindow.resetAll();
     	} else if (this._method === "Login") {
-    		//this.editWindow.send(this._method);
+    		this._editWindow.send(this._method);
+    		this._sending = true;
+    		this._editWindow.resetAll();
     	}
     };
     
@@ -399,7 +418,7 @@ SAR.Scene_CreateLoginAccount = function (){
     	if (this._editWindow.accepted()['name'] && this._editWindow._data !== 'pass') {
     		this.onInputUserOk();
     	}
-    	if (this._editWindow.accepted()['pass']) {
+    	if (this._editWindow.accepted()['pass'] && this._sending === false) {
     		this.onInputPassOk();
     	}
     };
@@ -420,23 +439,32 @@ SAR.Scene_CreateLoginAccount = function (){
     
 })(Window_TitleCommand);
 
-/*
- * Class Window_MenuCommand
- */
-(function (WMC) {
+(function (SM) {
 	
-	/**
-	 * overwrite of makeCommandList
-	 */
-	WMC.prototype.makeCommandList = function() {
-        this.addMainCommands();
-        this.addFormationCommand();
-        this.addOriginalCommands();
-        this.addOptionsCommand();
-        this.addGameEndCommand();
-    };
-    
-})(Window_MenuCommand);
+	SM.prototype.commandSave = function (){
+		var save = JsonEx.stringify(DataManager.makeSaveContents());
+		socket.emit("SaveUserData", save, function (bool, msg, error) {
+			if (bool === true) {
+				console.log(msg);
+				SceneManager.pop();
+			} else {
+				console.log(error);
+			}
+		});
+	};
+	
+	SM.prototype.commandGameEnd = function (){
+		var save = JsonEx.stringify(DataManager.makeSaveContents());
+		socket.emit("Logout", save, function (bool, msg, error) {
+			if (bool === true) {
+				console.log(msg);
+				SceneManager.push(Scene_GameEnd);
+			} else {
+				console.log(error);
+			}
+		})
+	};
+})(Scene_Menu);
 
 
 /*
@@ -460,7 +488,7 @@ SAR.Scene_CreateLoginAccount = function (){
      */
     ST.prototype.commandNewGame = function() {
         this._commandWindow.close();
-        //TODO use goto or push?
+        DataManager.setupNewGame();
         SceneManager.push(SAR.Scene_CreateLoginAccount);
         SceneManager.prepareNextScene("Create");
     };
@@ -474,4 +502,3 @@ SAR.Scene_CreateLoginAccount = function (){
         SceneManager.prepareNextScene("Login");
     };
 })(Scene_Title);
-
