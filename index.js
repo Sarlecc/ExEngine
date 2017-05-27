@@ -48,9 +48,9 @@ var app = require('express')();
  */
 var https = require('https');
 var server = https.createServer({
-    key: fs.readFileSync(projectPath+/key.pem'),
-    cert: fs.readFileSync(projectPath+/cert.pem'),
-    ca: fs.readFileSync(projectPath+/cert.pem'),
+    key: fs.readFileSync(projectPath+'/key.pem'),
+    cert: fs.readFileSync(projectPath+'/cert.pem'),
+    ca: fs.readFileSync(projectPath+'/cert.pem'),
     requestCert: false,
     rejectUnauthorized: false
 },app);
