@@ -8,8 +8,6 @@
  * are hereby granted provided that the above copyright notice and this permission notice 
  * appear in all copies.
  *
- * TODO rewrite original Scene_Debug to be more powerful
- * Because of this will not be including it in this release yet.
  */
  
  //-----------------------------------------------------------------------------
@@ -505,7 +503,7 @@ Window_SkillStats.prototype.getSkillData = function(){
 	}
 	var self = this;
 	socket.emit("retrieve data", request, function(data) {
-	        if (self._collected === false) {
+		if (self._collected === false) {
 		    self._skillData = data;
 		    self.getMaxSkillUsed();
 		    self.totalUses();
@@ -520,7 +518,6 @@ Window_SkillStats.prototype.getSkillData = function(){
  */
 Window_SkillStats.prototype.getMaxSkillUsed = function() {
 	var tempArray = [];
-	console.log(this._skillData.data.skills);
 	for (var i = 0; i < this._skillData.data.skills.length; i++) {
 		 tempArray.push(this._skillData.data.skills[i][2])
     };
@@ -1339,4 +1336,3 @@ Scene_Debug.prototype.helpText = function() {
                 'must be wrapped in double quotes.');
     }
 };
-

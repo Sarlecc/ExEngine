@@ -9,13 +9,13 @@
  * appear in all copies.
  * 
  * TODO does it still require jQuery?
- * pretty certain it doesn't anymore the reason it did to begin with was with the old PHP version of the server.
  * requires jQuery2-2-3.js note that because of this, plug-ins that use $
  * in their functions might cause errors.
  */
 //TODO fix formatting Github seems to have broken it some :/
 var SAR = SAR || {};
 SAR.ExEngineClient = (function() {
+
 
 	//NOTE that this object is being phased out and doesn't currently hold a function
 	var user = {
