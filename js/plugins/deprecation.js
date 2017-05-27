@@ -32,7 +32,7 @@ function Scene_Save () {
  * deprecation of class Scene_Debug
  */
  function Scene_Debug () {
-   console.warn("Scene_Debug is deprecated and no longer has any functionality")'
+   console.warn("Scene_Debug is deprecated and no longer has any functionality");
  };
 
 /*
@@ -114,11 +114,4 @@ function Window_SaveFileList () {
     	console.warn("makeSavefileInfo has been deprecated");
     };
 
-    DataManager.makeSaveContents = function() {
-    	console.warn("makeSaveContents has been deprecated");
-    };
-
-    DataManager.extractSaveContents = function() {
-        console.warn("extractSaveContents has been deprecated");
-    };
 })();
