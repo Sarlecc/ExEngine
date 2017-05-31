@@ -36,9 +36,7 @@ var projectPath = '/path';
 var encryptionNumber = 325;
 
 // DO NOT CHANGE ANYTHING PAST THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING
-
-//TODO will need to have an object here that stores the userName, pass and socket id
-//Maybe send socket id back to user then use it as a key up above?	
+	
 var users = {};
 
 var fs = require('fs');
@@ -110,9 +108,8 @@ app.post('/js/utility/*', function(req, res) {
     var isAdmin = {user: req.body.user, pass: req.body.pass};
     var db = mongoskin.db('mongodb://' + admin.user + ':' + admin.pass + '@' + dbHost + ':' +
 		           dbPort + '/multiplayer');
-    //TODO the following might be an incorrect method of checking user rights
-    //I need to find a way to limit admin access to only admins
-    db.collection('system.users').findOne({name: admin.user}, function(error, item) {
+    //TODO I need to find a way to limit admin access to only admins
+    db.authenticate(admin.user, admin.pass, function(error, item) {
         if (error) {
   	    io.emit('Error', error);
   	    console.error(error);
@@ -120,7 +117,7 @@ app.post('/js/utility/*', function(req, res) {
   	    process.exit(1);
         }
   	    console.info('findOne: ', item);
-  	if (!!item) {
+  	if (item === true) {
   	    var path = __dirname + '/js/utility/' + req.params[0];
   	    res.sendFile(path);
         } else {
@@ -131,6 +128,7 @@ app.post('/js/utility/*', function(req, res) {
 });
 
 io.on('connection', function(socket){
+       console.log("A socket has connected to the server, they are not logged in yet. socket id: " + socket.id);
         /**
 	 * This function creates a new player and stores the player in the players collection
 	 */
@@ -139,7 +137,6 @@ io.on('connection', function(socket){
 		                      dbHost + ':' + dbPort + '/multiplayer');
 	    user.logonAttempts = 0;
 	    user.pass = simplEncrypt(user.pass, encryptionNumber);
-       	    user.save = simplEncrypt(user.save, encryptionNumber);
   	    db.collection('players').findOne({name: user.name}, function(error, item) {
   		   var saved = false;
   		   if (error) {
@@ -150,7 +147,7 @@ io.on('connection', function(socket){
   		    }
   		    if (item === null) {
   			db.collection('players').insert(user, function(error, count){
-  		            return console.info('Saved new player data for:', user.name);
+  		            return console.info('Created new player: ', user.name);
   		        });
   			users[socket.id] = user.name;
   			fnd(true, null);
@@ -168,8 +165,6 @@ io.on('connection', function(socket){
 	 * then checks to see if their is a name by that player name in the data base.
 	 */
 	socket.on('Login', function(user, fnd){
-		//not certain if I want to put the admin object in the db string right here
-		//as it might conflit with the authenication process
 		var db = mongoskin.db('mongodb://' + admin.user + ':' + admin.pass + '@' + dbHost + ':' +
 		                      dbPort + '/multiplayer');
 		for (var id in users) {
@@ -209,7 +204,8 @@ io.on('connection', function(socket){
   			                               db.close();
   			                               process.exit(1);
 						   }
-					    console.log(data);
+					    console.log("login attempts for: " + item.name +
+						        " has increased by 1 and are now: " + item.logonAttempts);
 					});
 					db.close();
 				}
@@ -242,6 +238,7 @@ io.on('connection', function(socket){
 			            }
 			            console.log(data);
 			});
+			console.log("Player: " + users[socket.id] + " has logged out successfully");
 		        fnd(true, "Player data saved successfully; goodbye")
 			db.close();
 		});
@@ -285,9 +282,13 @@ io.on('connection', function(socket){
    * through intentional means (like hitting the refresh button or closing the browser)
    */
   socket.on('disconnect', function(){
-  	console.log("Player: " + users[socket.id] + " disconnected this was not done through a normal logout.");
-  	users[socket.id] = undefined;
-	users = JSON.parse(JSON.stringify(users));
+  	if (typeof users[socket.id] !== 'undefined'){
+  	    console.log("Player: " + users[socket.id] + " disconnected this was not done through a normal logout.");
+  	    users[socket.id] = undefined;
+	    users = JSON.parse(JSON.stringify(users));
+  	} else {
+  	    console.log("A socket disconnected without being logged in. socket id: " + socket.id);
+  	}
   });
   
   /**
