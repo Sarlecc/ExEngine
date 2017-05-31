@@ -228,7 +228,7 @@ io.on('connection', function(socket){
   			   db.close();
   			   process.exit(1);
 			}
-			db.collection('players').updateOne({name: users[socket.id]}, {$set: {save: save}},
+			db.collection('players').updateOne({name: item.name}, {$set: {save: save}},
 				function(error, data) {
 				    if (error) {
 			                io.emit('Error', error);
