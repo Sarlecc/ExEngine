@@ -10,7 +10,6 @@
  */
 
 //THIS CODE IS FOR A NON PRODUCTION ENVIROMENT AT THE MOMENT
-//TODO add a cancel button? needs to get changed to esc button
 //TODO add someparams for using .pngs for the background windows?
 //TODO Also might want to go through code and rewrite parts of it.
 //also if I store the username and pass on the server I can remove some of the sending username and pass to server
@@ -31,6 +30,8 @@ Object.defineProperty(SAR_Special, 'Window_User', {
 		'pass': "",
 	};
     var maxLength = 20;
+    var minNameLength = 5;
+    var minPassLength = 10;
     var indexes = {
     	'name': user['name'].length,
     	'pass': user['pass'].length
@@ -137,6 +138,28 @@ Object.defineProperty(SAR_Special, 'Window_User', {
     	               return maxLength;
     	           }
      });
+	    
+     /**
+      * function SAR_Special.Window_User.minNameLength
+      * 
+      * returns the minNameLength
+      */
+     Object.defineProperty(SAR_Special.Window_User, 'minNameLength', {
+     	    value: function () {
+     	    	       return minNameLength;
+     	           }
+     });
+     
+     /**
+      * function SAR_Special.Window_User.minPassLength
+      * 
+      * returns the minPassLength
+      */
+     Object.defineProperty(SAR_Special.Window_User, 'minPassLength', {
+     	    value: function () {
+     	    	       return minPassLength;
+     	    }
+     });
 
     /**
      * SAR_Special.Window_User.indexed
@@ -160,11 +183,14 @@ Object.defineProperty(SAR_Special, 'Window_User', {
      */
     Object.defineProperty(SAR_Special.Window_User, 'send', {
            value: function(method) {
-           	          user.save = DataManager.makeSaveContents();
-           	          user.save = JsonEx.stringify(user.save);
+           	      DataManager.setupNewGame();
     	              socket.emit(method, user, function(bool, data, error) {
     		              if (bool === true) {
-    			              SAR_Special.Window_User.load(data);
+    			              if (SAR_Special.Window_User.load(data)) {
+    			                  SceneManager.goto(Scene_Map);
+    			              } else {
+    			              	  SceneManager.goto(Scene_Map);
+    			              }
     		              } else if (bool === false) {
     		              	console.error(error);
     		              }
@@ -172,22 +198,18 @@ Object.defineProperty(SAR_Special, 'Window_User', {
     	          }
     });
     
-    Object.defineProperty(SAR_Special.Window_User, 'load', {
+     Object.defineProperty(SAR_Special.Window_User, 'load', {
     	value: function(data) {
-    		var loaded = false;
     		if (data !== null) {
     		    DataManager.extractSaveContents(JsonEx.parse(data));
-    		    loaded = true;
-           } else {
-           	    SceneManager.goto(Scene_Map);
-           }
-            if (loaded === true) {
-            	if ($gameSystem.versionId() !== $dataSystem.versionId) {
-                    $gamePlayer.reserveTransfer($gameMap.mapId(), $gamePlayer.x, $gamePlayer.y);
-                    $gamePlayer.requestMapReload();
-                }
-                SceneManager.goto(Scene_Map);
-            }
+    		    if ($gameSystem.versionId() !== $dataSystem.versionId) {
+                        $gamePlayer.reserveTransfer($gameMap.mapId(), $gamePlayer.x, $gamePlayer.y);
+                        $gamePlayer.requestMapReload();
+                    }
+                return true;
+          } else {
+          	return false;
+          }
     	}
     });
     
@@ -264,9 +286,25 @@ Object.defineProperty(SAR_Special, 'Window_User', {
     SAR.Window_User.prototype.accepted = function () {
     	return this._accept;
     };
+
+    SAR.Window_User.prototype.cancel = function () {
+    	this._accept['name'] = false;
+    };
+
+    SAR.Window_User.prototype.indexed = function (key) {
+    	return this._special.indexed(key)
+    };
     
     SAR.Window_User.prototype.send = function (method) {
     	return this._special.send(method);
+    };
+
+    SAR.Window_User.prototype.minNameLength = function () {
+    	return this._special.minNameLength();
+    };
+    
+    SAR.Window_User.prototype.minPassLength = function () {
+    	return this._special.minPassLength();
     };
     
     SAR.Window_User.prototype.left = function() {
@@ -341,8 +379,12 @@ Object.defineProperty(SAR_Special, 'Window_User', {
 		    	if (this.add(this._data, Input._latestButton)) {
 		    	    this.refresh();
 		    	}
-		    } else if (Input._latestButton === 'enter') {
+		    } else if (Input._latestButton === 'enter' &&
+    	                       this.indexed('name') >= this.minNameLength()) {
 		    	this._accept[this._data] = true;
+		    } else if (Input._latestButton === 'enter' && 
+		               this.indexed('pass') >= this.minPassLength()) {
+		        this._accept[this._data] = true;      	
 		    }
 	    }
 	    Window_Base.prototype.update.call(this);
@@ -389,16 +431,25 @@ SAR.Scene_CreateLoginAccount = function (){
     SAR.Scene_CreateLoginAccount.prototype.createHelpWindow = function () {
     	this._helpWindow = new Window_Help;
     	this.addWindow(this._helpWindow);
-    	this._helpWindow.setText(this._method + ": please enter a user name");
+    	this.refreshHelp();
+    };
+
+    SAR.Scene_CreateLoginAccount.prototype.refreshHelp = function () {
+    	if (this._editWindow._data === 'name') {
+            this._helpWindow.setText(this._method + ": please enter a user name\nMust be at least: " + 
+    	                             this._editWindow.minNameLength() + " characters");
+    	} else {
+    	    this._helpWindow.setText(this._method + ": please enter a password for... " + this._editWindow.data() +
+    	                             "\nMust be at least: " + this._editWindow.minPassLength() + " characters");
+    	}
     };
 
     SAR.Scene_CreateLoginAccount.prototype.onInputUserOk = function () {
     	this._editWindow._data = 'pass';
     	this._editWindow.refresh();
-    	this._helpWindow.setText(this._method + ": please enter a password for... " + this._editWindow.data());
+    	this.refreshHelp();
     };
     
-    //TODO this will need to get changed to to reflect the socket.io server
     SAR.Scene_CreateLoginAccount.prototype.onInputPassOk = function () {
     	if (this._method === "Create") {
     		this._editWindow.send(this._method);
@@ -410,16 +461,34 @@ SAR.Scene_CreateLoginAccount = function (){
     		this._editWindow.resetAll();
     	}
     };
+
+    SAR.Scene_CreateLoginAccount.prototype.onInputUserCancel = function () {
+    	this._editWindow.reset('name');
+    	SceneManager.pop();
+    };
+    
+    SAR.Scene_CreateLoginAccount.prototype.onInputPassCancel = function () {
+    	this._editWindow.reset('pass');
+    	this._editWindow._data = 'name';
+    	this._editWindow.refresh();
+    	this._editWindow.cancel();
+    	this.refreshHelp();
+    };
     
     SAR.Scene_CreateLoginAccount.reupdate = SAR.Scene_CreateLoginAccount.prototype.update;
     
     SAR.Scene_CreateLoginAccount.prototype.update = function () {
     	SAR.Scene_CreateLoginAccount.reupdate.call(this);
     	if (this._editWindow.accepted()['name'] && this._editWindow._data !== 'pass') {
-    		this.onInputUserOk();
+    	    this.onInputUserOk();
     	}
     	if (this._editWindow.accepted()['pass'] && this._sending === false) {
-    		this.onInputPassOk();
+    	    this.onInputPassOk();
+    	}
+	if (this._editWindow.accepted()['name'] && Input.isRepeated('escape')) {
+    	    this.onInputPassCancel();
+    	} else if (Input.isRepeated('escape')) {
+    	    this.onInputUserCancel();
     	}
     };
 
@@ -445,10 +514,10 @@ SAR.Scene_CreateLoginAccount = function (){
 		var save = JsonEx.stringify(DataManager.makeSaveContents());
 		socket.emit("SaveUserData", save, function (bool, msg, error) {
 			if (bool === true) {
-				console.log(msg);
-				SceneManager.pop();
+			    console.log(msg);
+			    SceneManager.pop();
 			} else {
-				console.log(error);
+			    console.log(error);
 			}
 		});
 	};
@@ -457,10 +526,10 @@ SAR.Scene_CreateLoginAccount = function (){
 		var save = JsonEx.stringify(DataManager.makeSaveContents());
 		socket.emit("Logout", save, function (bool, msg, error) {
 			if (bool === true) {
-				console.log(msg);
-				SceneManager.push(Scene_GameEnd);
+			    console.log(msg);
+			    SceneManager.goto(Scene_Title);
 			} else {
-				console.log(error);
+			    console.log(error);
 			}
 		})
 	};
@@ -488,7 +557,6 @@ SAR.Scene_CreateLoginAccount = function (){
      */
     ST.prototype.commandNewGame = function() {
         this._commandWindow.close();
-        DataManager.setupNewGame();
         SceneManager.push(SAR.Scene_CreateLoginAccount);
         SceneManager.prepareNextScene("Create");
     };
@@ -502,3 +570,26 @@ SAR.Scene_CreateLoginAccount = function (){
         SceneManager.prepareNextScene("Login");
     };
 })(Scene_Title);
+
+(function (GM) {
+	
+    /**
+    * aliases reserveTransfer
+    * This function now saves player data upon transfering to
+    * a new map.
+    */
+    var reserveSocketTransfer = GM.prototype.reserveTransfer;
+    GM.prototype.reserveTransfer = function(mapId, x, y, d, fadeType) {
+	reserveSocketTransfer.call(this, mapId, x, y, d, fadeType);
+        if ($gameMap.mapId() > 0) {
+            var save = JsonEx.stringify(DataManager.makeSaveContents());
+	    socket.emit("SaveUserData", save, function (bool, msg, error) {
+	        if (bool === true) {
+		    console.log(msg);
+                } else {
+		    console.log(error);
+		}
+	    });
+	 }
+     };
+})(Game_Player);
