@@ -47,13 +47,13 @@ var app = require('express')();
  */
 var https = require('https');
 var server = https.createServer({
-    key: fs.readFileSync(projectPath+'/key.pem'),
-    cert: fs.readFileSync(projectPath+'/cert.pem'),
-    ca: fs.readFileSync(projectPath+'/cert.pem'),
+    key: fs.readFileSync(projectPath+'/.ssl/key.pem'),
+    cert: fs.readFileSync(projectPath+'/.ssl/cert.pem'),
+    ca: fs.readFileSync(projectPath+'/.ssl/cert.pem'),
     requestCert: false,
     rejectUnauthorized: false
 },app);
-server.listen(3000);
+server.listen(443);
 
 var io = require('socket.io').listen(server);
 console.log("server is now listening")
@@ -89,7 +89,7 @@ const simplEncrypt = function (string, num) {
  */
 app.get('/*', function(req, res){
 	var path = __dirname + '/' + req.params[0];
-	if (path.match(/utility/g)){
+	if (path.match(/utility/g) || path.match(/.ssl/g) || path.match(/server/g)){
         res.sendStatus(403);
     } else {
    	    res.sendFile(path);
