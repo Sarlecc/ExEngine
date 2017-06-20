@@ -27,6 +27,11 @@ var admin = {
 */
 var projectPath = '/path';
 
+/*
+* path to the ssl certificates
+*/
+var SSLPath = '/path';
+
 /**
 * Encryption number used for encrypting player saves
 * Once you set this to a number do not change it again
@@ -47,9 +52,9 @@ var app = require('express')();
  */
 var https = require('https');
 var server = https.createServer({
-    key: fs.readFileSync(projectPath+'/.ssl/key.pem'),
-    cert: fs.readFileSync(projectPath+'/.ssl/cert.pem'),
-    ca: fs.readFileSync(projectPath+'/.ssl/cert.pem'),
+    key: fs.readFileSync(SSLPath+'/privkey.pem'),
+    cert: fs.readFileSync(SSLPath+'/cert.pem'),
+    ca: fs.readFileSync(SSLPath+'/chain.pem'),
     requestCert: false,
     rejectUnauthorized: false
 },app);
@@ -89,7 +94,7 @@ const simplEncrypt = function (string, num) {
  */
 app.get('/*', function(req, res){
 	var path = __dirname + '/' + req.params[0];
-	if (path.match(/utility/g) || path.match(/.ssl/g) || path.match(/server/g)){
+	if (path.match(/utility/g) || path.match(/.ssl/g)){
         res.sendStatus(403);
     } else {
    	    res.sendFile(path);
