@@ -7,6 +7,10 @@
  * appear in all copies.
  */
 
+var config = require('./config/config.json');
+var fs = require('fs');
+var app = require('express')();
+
 /**
  * admin object
  * user this is the name of the administrator
@@ -17,20 +21,20 @@
  * NOTE that this may be changed/removed in the future.
  */
 var admin = {
-	user : 'admin',
-	pass : 'pass'
+	user : config['adminName'][0],
+	pass : config['adminPwd'][0]
 	};
 
 /**
 * The variable that holds the path of your
 * project folder represented as a string.
 */
-var projectPath = '/path';
+var projectPath = config['projectPath'][0];
 
 /*
 * path to the ssl certificates
 */
-var SSLPath = '/path';
+var SSLPath = config['sslPath'][0];
 
 /**
 * Encryption number used for encrypting player saves
@@ -38,14 +42,13 @@ var SSLPath = '/path';
 * after you have players. Keep a copy of this number in
 * safe place NOT ON YOUR COMPUTERS DESKTOP
 */
-var encryptionNumber = 325;
+var encryptionNumber = config['encryptionNumber'][0];
 
 // DO NOT CHANGE ANYTHING PAST THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING
 	
 var users = {};
 
-var fs = require('fs');
-var app = require('express')();
+
 
 /**
  *  creates a secure https server
