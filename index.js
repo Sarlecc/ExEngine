@@ -42,7 +42,7 @@ var SSLPath = config['sslPath'][0];
 * after you have players. Keep a copy of this number in
 * safe place NOT ON YOUR COMPUTERS DESKTOP
 */
-var encryptionNumber = config['encryptionNumber'][0];
+var encryptionNumber = parseInt(config['encryptionNumber'][0], 10);
 
 // DO NOT CHANGE ANYTHING PAST THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING
 	
