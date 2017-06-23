@@ -654,7 +654,7 @@ Window_SkillStats.prototype.drawBlock4 = function(y) {
  * 2. damage will be on right hand side? not sure if I will do this one
  */
 Window_SkillStats.prototype.drawBlock5 = function(y) {
-	this.contents.gradientFillRect(50, y, 816 - 140, 220, '#00108033', '#301050', true);
+	this.contents.gradientFillRect(50, y, 816 - 140, 220, 'rgba(0, 16, 128, 0.13)', 'rgba(48, 16, 80, 1)', true);
 	this.drawVerticalInfo(y); //draws the vertical side text
 	this.drawHorizantalInfo(y); //draws the horizantal text
 	if (typeof this._skillData.data !== 'undefined') {
