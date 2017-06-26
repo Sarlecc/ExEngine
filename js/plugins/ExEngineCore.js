@@ -1,5 +1,5 @@
 /*:
- * @plugindesc more advanced Input
+ * @plugindesc Core methods and classes for ExEngine
  * @author Sarlecc
  * @help
  * Copyright (c) 2017, Sarlecc (Mythical Games)
@@ -7,7 +7,68 @@
  * Permission to use, copy, modify, and/or distribute this software for free or for a fee 
  * are hereby granted provided that the above copyright notice and this permission notice 
  * appear in all copies.
+ * 
+ * Extra Credits:
+ * Yanfly Window_ValueBar based off yanfly's rpgmaker vx ace debug script
  */
+
+//-----------------------------------------------------------------------------
+// Window_ValueBar
+//
+// Essentially an input bar that displays whats typed has many, many uses.
+// The following code is based off a piece of yanfly's rpgmaker vx ace
+// debug script
+function Window_ValueBar() {
+    this.initialize.apply(this, arguments);
+};
+
+Window_ValueBar.prototype = Object.create(Window_Selectable.prototype);
+Window_ValueBar.prototype.constructor = Window_ValueBar;
+
+Window_ValueBar.prototype.initialize = function (x, y) {
+	 var width = Graphics.width;
+     var height = 72;
+     this.blinker = false;
+     this.maxium = 300;
+     this.text = '';
+     Window_Selectable.prototype.initialize.call(this, x, y, width, height);
+     this.contents.fontSize = 16;
+     this.contents.textColor = '#0FAB84';
+     this.refresh();
+};
+
+Window_ValueBar.prototype.refresh = function() {
+	this.contents.clear();
+	this.contents.fillRect(0, 0, this.width, this.height, '#FFFFFF');
+	 this.contents.fillRect(1, 1, this.width-2, this.height-2, '#000000');
+	if (this.blinker) {
+		this.drawText(this.text+ '▌', 4, 4, this.width);
+	} else {
+		this.drawText(this.text, 4, 4, this.width);
+	}
+};
+
+Window_ValueBar.prototype.update = function() {
+	this.blinker = Graphics.frameCount % 30 === 0 ? !this.blinker : this.blinker;
+	if (Input._latestButton !== null && Input.isRepeated(Input._latestButton)) {
+		if (Input._latestButton === 'backspace' && this.text.length > 0) {
+			this.text = this.text.slice(0, -1);
+		} else if (this.text.length <= this.maxium && !Input.dontType.includes(Input._latestButton)) {
+			this.text = this.text + Input._latestButton;
+		}	
+	}
+	this.refresh();
+};
+
+Window_ValueBar.prototype.getText = function() {
+	return this.text;
+};
+
+Window_ValueBar.prototype.resetText = function() {
+	this.text = '';
+};
+
+
  
 //TODO note Sarlecc that using this in the login/create account screens may not be a good idea
 //this is because it could be used to log key strokes.
@@ -146,3 +207,40 @@
     };
       
 })(Input);
+
+(function (TI) {
+    //Found out I could pull this off without adding a mousemove event
+    //due to the TouchInput already having one
+    //in fact all I needed to do was change the _onMouseMove function and remove the if statement
+    TI._onMouseMove = function(event) {
+        var x = Graphics.pageToCanvasX(event.pageX);
+        var y = Graphics.pageToCanvasY(event.pageY);
+        this._onMove(x, y);
+    };
+    
+    
+    /**
+     * called like so in a windows update method
+     * TouchInput.isMouseOver(this, this.myFunction1, this.myFunction2);
+     * @param {Object} item
+     * @param {function} fn1 this decides what you want to happen when mouse is over window
+     * @param {function} fn2 this decides what you want to happen when mouse is not over window
+     */
+    TI.isMouseOver = function (item, fn1, fn2) {
+    	if (this._x >= item.x && this._x <= item.width + item.x &&
+    		this._y >= item.y && this._y <= item.height + item.y) {
+    		if (typeof fn1 === 'function') {
+    		    fn1(item);
+    		} else {
+    			return true;
+    		}
+    	} else {
+    		if (typeof fn2 === 'function') {
+    			fn2(item);
+    		} else {
+    			return false;
+    		}
+    	}
+    };
+    
+})(TouchInput);
